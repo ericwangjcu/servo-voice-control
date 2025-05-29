@@ -2,37 +2,43 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Voice Controlled Servo</title>
+  <title>ESP32 Voice Control Test</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+    button {
+      padding: 15px 30px;
+      font-size: 1.2rem;
+      border-radius: 8px;
+      border: none;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
-<body style="text-align:center; padding-top:50px;">
-  <h2>🎤 Say "Go A" or "Go B"</h2>
-  <button onclick="startListening()">Speak</button>
-  <p id="status">Status: Idle</p>
+<body>
+  <h2>Test ESP32 Communication</h2>
+  <button onclick="sendTest()">Send Test to ESP32</button>
+  <p id="status"></p>
 
   <script>
-    const ESP32_IP = "http://192.168.1.42";  // Replace with your actual ESP32 IP
+    const ESP32_IP = "http://192.168.1.42"; // ← CHANGE THIS TO YOUR ESP32 IP
 
-    function startListening() {
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.lang = 'en-US';
-      recognition.start();
-
-      document.getElementById("status").innerText = "Listening...";
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript.toLowerCase();
-        document.getElementById("status").innerText = "Heard: " + transcript;
-
-        if (transcript.includes("a")) {
-          fetch(`${ESP32_IP}/goA`);
-        } else if (transcript.includes("b")) {
-          fetch(`${ESP32_IP}/goB`);
-        }
-      };
-
-      recognition.onerror = (e) => {
-        document.getElementById("status").innerText = "Error: " + e.error;
-      };
+    function sendTest() {
+      fetch(`${ESP32_IP}/goA`)
+        .then(response => {
+          if (response.ok) {
+            document.getElementById("status").innerText = "✅ Message sent to ESP32!";
+          } else {
+            document.getElementById("status").innerText = "⚠ Failed to contact ESP32";
+          }
+        })
+        .catch(error => {
+          document.getElementById("status").innerText = "❌ Error: " + error;
+        });
     }
   </script>
 </body>
