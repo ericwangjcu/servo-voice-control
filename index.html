@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Voice Controlled Servo</title>
+</head>
+<body style="text-align:center; padding-top:50px;">
+  <h2>🎤 Say "Go A" or "Go B"</h2>
+  <button onclick="startListening()">Speak</button>
+  <p id="status">Status: Idle</p>
+
+  <script>
+    const ESP32_IP = "http://192.168.1.42";  // Replace with your actual ESP32 IP
+
+    function startListening() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-US';
+      recognition.start();
+
+      document.getElementById("status").innerText = "Listening...";
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        document.getElementById("status").innerText = "Heard: " + transcript;
+
+        if (transcript.includes("a")) {
+          fetch(`${ESP32_IP}/goA`);
+        } else if (transcript.includes("b")) {
+          fetch(`${ESP32_IP}/goB`);
+        }
+      };
+
+      recognition.onerror = (e) => {
+        document.getElementById("status").innerText = "Error: " + e.error;
+      };
+    }
+  </script>
+</body>
+</html>
