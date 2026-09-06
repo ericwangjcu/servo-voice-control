@@ -1,0 +1,49 @@
+name: Build EE3600 Motor PWM Fix
+
+on:
+  push:
+    branches:
+      - chatgpt/ee3600-motor-pwmfix-build
+    paths:
+      - 'ee3600_motor_pwmfix/**'
+      - '.github/workflows/build-ee3600-pwmfix.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ARM toolchain and build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
+
+      - name: Fetch Pico SDK
+        run: |
+          git clone --depth 1 --branch 2.1.1 --recurse-submodules --shallow-submodules https://github.com/raspberrypi/pico-sdk.git "$RUNNER_TEMP/pico-sdk"
+          echo "PICO_SDK_PATH=$RUNNER_TEMP/pico-sdk" >> "$GITHUB_ENV"
+
+      - name: Configure
+        working-directory: ee3600_motor_pwmfix
+        run: cmake -S . -B build -G Ninja -DPICO_BOARD=pico -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build UF2
+        working-directory: ee3600_motor_pwmfix
+        run: cmake --build build --target EE3600_Motor_PID_RP2040
+
+      - name: Verify artifact
+        run: |
+          ls -lh ee3600_motor_pwmfix/build/EE3600_Motor_PID_RP2040.uf2
+          cp ee3600_motor_pwmfix/build/EE3600_Motor_PID_RP2040.uf2 ee3600_motor_pwmfix/build/EE3600_Motor_PID_RP2040_v2.0-D-PWMFIX.uf2
+
+      - name: Upload UF2
+        uses: actions/upload-artifact@v4
+        with:
+          name: EE3600_Motor_PID_RP2040_v2.0-D-PWMFIX
+          path: |
+            ee3600_motor_pwmfix/build/EE3600_Motor_PID_RP2040_v2.0-D-PWMFIX.uf2
+            ee3600_motor_pwmfix/main.c
+            ee3600_motor_pwmfix/CMakeLists.txt
+          if-no-files-found: error
